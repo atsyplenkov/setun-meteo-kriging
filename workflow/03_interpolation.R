@@ -7,7 +7,6 @@ library(terra)
 library(sf)
 library(sp)
 library(qs)
-# library(atslib)
 
 source("R/custom_functions.R")
 
@@ -60,17 +59,6 @@ prec_kr <-
   group_split() %>% 
   map_dfr(~krige_prcp(.x, p))
 
-# explore
-meteo_df %>% 
-  rename(date = datetime_tz) %>% 
-  filter(wmo %in% c("27515", "27524")) %>% 
-  bind_rows(prec_kr %>% 
-              transmute(date, wmo = "krig", p = var)) %>% 
-  filter(month(date) == 10) |> 
-  ggplot(aes(x = date, y = p,
-             fill = factor(wmo))) +
-  geom_col(position = position_dodge2(width = 0.5))
-
 # merge together ----------------------------------------------------------
 krig_df <- 
   prec_kr %>% 
@@ -115,6 +103,26 @@ meteo_df_kr_pet <-
   ) %>% 
   unnest(cols = c(data)) %>% 
   ungroup()
+
+# plot --------------------------------------------------------------------
+meteo_df_kr_pet  %>%
+  filter(wmo %in% c("27515", "27524", "kriging")) %>%
+  filter(month(datetime_tz) == 10) %>%
+  ggplot(aes(x = datetime_tz, y = p,
+             fill = factor(wmo))) +
+  geom_col(position = position_dodge2(width = 0.5)) +
+  scale_fill_viridis_d(
+    name = "Метеостанция",
+    option = "rocket",
+    end = 0.85,
+    labels = c("Немчиновка", "Внуково", "Сетунь")
+  ) +
+  theme_light() +
+  labs(
+    x = "",
+    y = "Осадки, мм"
+  )
+
 
 # save --------------------------------------------------------------------
 library(qs)
